@@ -29,7 +29,7 @@ export default defineComponent({
         totalRef.value = Math.floor(total /(1024 * 1024) *100) /100
         
       }
-      upload(file,{maxRunSize:6,onProgress,chunkSize:1024*1024*20});
+      upload(file,{maxRunSize:6,onProgress,chunkSize:1024*1024*5});
     };
 
     return {

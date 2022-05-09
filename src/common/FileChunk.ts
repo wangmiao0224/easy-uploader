@@ -8,11 +8,11 @@ export type ChunkFileType = {
   name: string;
   size: number;
   hash: string;
-  hashNo: number;
-  chunk: Blob;
+  no: number;
+  file:Blob
 };
 
-export default class Upload {
+export default class FileChunk {
   file: File;
   chunkSize: number;
   isChunk = false;
@@ -27,13 +27,14 @@ export default class Upload {
   getFileChunks(
     file: File = this.file,
     chunkSize: number = this.chunkSize
-  ): Promise<ChunkFileType[]> {
+  ): Promise<ChunkFileType>[] {
     const BlobSLice = File.prototype.slice;
     const chunkNum = Math.ceil(file.size / chunkSize);
     const spark = new SparkMD5.ArrayBuffer()
+    
     const promiseArr: Promise<ChunkFileType>[] = new Array(chunkNum).fill(0).map((item, index) => {
-      const fileReader = new FileReader();
-        return new Promise<ChunkFileType>((resolve) => {
+      return new Promise<ChunkFileType>((resolve) => {
+        const fileReader = new FileReader();
           fileReader.onload = (e) => {
             const res = e.target?.result;
             spark.append(res as ArrayBuffer);
@@ -41,10 +42,9 @@ export default class Upload {
               name: file.name,
               size: chunk.size,
               hash: spark.end(),
-              hashNo: index,
-              chunk: chunk,
+              no: index,
+              file:chunk
             };
-            console.log(result);
             resolve(result);
           };
           const chunk = BlobSLice.apply(file, [
@@ -53,12 +53,10 @@ export default class Upload {
               ? file.size
               : (index + 1) * chunkSize,
           ]);
-          console.log(chunk,index);
-          
           fileReader.readAsArrayBuffer(chunk);
         });
       });
     
-    return Promise.all<ChunkFileType>(promiseArr)
+    return promiseArr
   }
 }
