@@ -1,5 +1,4 @@
-import SparkMD5 from "spark-md5";
-
+import Worker from '@/work/fileHash.worker'
 export type UploadConfig = {
   chunkSize: number; //分片文件大小
   isChunk: boolean; // 是否分
@@ -11,7 +10,6 @@ export type ChunkFileType = {
   no: number;
   file:Blob
 };
-
 export default class FileChunk {
   file: File;
   chunkSize: number;
@@ -30,33 +28,32 @@ export default class FileChunk {
   ): Promise<ChunkFileType>[] {
     const BlobSLice = File.prototype.slice;
     const chunkNum = Math.ceil(file.size / chunkSize);
-    const spark = new SparkMD5.ArrayBuffer()
     
     const promiseArr: Promise<ChunkFileType>[] = new Array(chunkNum).fill(0).map((item, index) => {
-      return new Promise<ChunkFileType>((resolve) => {
-        const fileReader = new FileReader();
-          fileReader.onload = (e) => {
-            const res = e.target?.result;
-            spark.append(res as ArrayBuffer);
+        const chunk = BlobSLice.apply(file, [
+          index * chunkSize,
+          (index + 1) * chunkSize > file.size
+            ? file.size
+            : (index + 1) * chunkSize,
+        ]);
+        let worker = new Worker()
+      return new Promise(resolve => { 
+        worker.onmessage = function (e: any) { 
+            const hash = e.data
             const result: ChunkFileType = {
               name: file.name,
               size: chunk.size,
-              hash: spark.end(),
+              hash: hash,
               no: index,
               file:chunk
             };
-            resolve(result);
-          };
-          const chunk = BlobSLice.apply(file, [
-            index * chunkSize,
-            (index + 1) * chunkSize > file.size
-              ? file.size
-              : (index + 1) * chunkSize,
-          ]);
-          fileReader.readAsArrayBuffer(chunk);
+          resolve(result)
+          worker = null
+          }
+          worker.postMessage([chunk])
+      })
+      
         });
-      });
-    
     return promiseArr
   }
 }

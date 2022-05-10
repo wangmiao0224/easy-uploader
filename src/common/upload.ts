@@ -6,7 +6,8 @@ export type UploadOptionType = {
   maxRunSize: number; //最大请求并行数  默认6
   onProgress?: (progressEvent: any) => void; //上传进度函数
   isChunk?: boolean; //是否分块上传， 默认true
-  chunkSize?: number; //分块大小 默认5 * 1024 * 1024
+  chunkSize?: number; //分块大小 默认5 * 1024 * 1024,
+  success?: ()=>void //全部上传成功钩子
 };
 const DEFAULT_CHUNK_SIZE: number = 5 * 1024 * 1024;
 const DEFAULT_IS_CHUNK = true;
@@ -19,6 +20,7 @@ export async function upload(file: File, options: UploadOptionType) {
     onProgress,
     isChunk = DEFAULT_IS_CHUNK,
     chunkSize = DEFAULT_CHUNK_SIZE,
+    success 
   } = options;
   const fileChunk = new FileChunk(file, { chunkSize, isChunk });
   const promiseFiles = await fileChunk.getFileChunks();
@@ -40,9 +42,10 @@ export async function upload(file: File, options: UploadOptionType) {
       onProgress && onProgress({ loaded: allLoaded, total: file.size });
     };
   };
-  const next = async (index: number) => {
-    if (cursor >= promiseFiles.length) return;
-    const file = await promiseFiles[cursor];
+  const next =  async (index: number) => {
+    const file = await promiseFiles[cursor]
+    console.log(file);
+    
     const formData = new FormData();
     formData.append("file", file.file);
     const urlParams = transUrlParams({
@@ -60,8 +63,13 @@ export async function upload(file: File, options: UploadOptionType) {
         data: formData,
         onUploadProgress: onProgressEvent,
       }).then((e) => {
-        cursor++;
-        next(index);
+        console.log(e,111);
+        if (++cursor >= promiseFiles.length) {
+          success && success()
+        } else { 
+          next(index);
+        }
+        
       })
     );
   };

@@ -6,7 +6,10 @@
       <span>{{loadedRef}}M/{{totalRef}}M-</span>
       <span>{{percentRef}}%</span>
     </div>
+    
   </div>
+  <div>时间:{{useTimeRef}}秒</div>
+    <div>速度:{{speed}}M/S</div>
 </template>
 
 <script lang="ts">
@@ -17,6 +20,11 @@ export default defineComponent({
     const fileRef = ref<HTMLElement | null>(null)
      const loadedRef = ref<number>(0)
      const totalRef = ref<number>(0)
+     const useTimeRef = ref<number>(0)
+     const speed = computed(()=>{
+       const res = loadedRef.value/ (useTimeRef.value||1)
+       return res.toFixed(2)
+     })
      const percentRef = computed(()=>{
        const result = (loadedRef.value/(totalRef.value||1)) * 100
        return result.toFixed(2)
@@ -29,7 +37,12 @@ export default defineComponent({
         totalRef.value = Math.floor(total /(1024 * 1024) *100) /100
         
       }
-      upload(file,{maxRunSize:6,onProgress,chunkSize:1024*1024*5});
+      const timer = setInterval(()=>{
+        useTimeRef.value++
+      },1000)
+      upload(file,{maxRunSize:6,onProgress,chunkSize:1024*1024*20,success:()=>{
+        clearInterval(timer)
+      }});
     };
 
     return {
@@ -37,7 +50,9 @@ export default defineComponent({
       fileRef,
       loadedRef,
       totalRef,
-      percentRef
+      percentRef,
+      useTimeRef,
+      speed
     };
   }
  

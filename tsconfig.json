@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "allowJs": false,
     "target": "esnext",
     "module": "esnext",
     "strict": true,
@@ -24,16 +25,17 @@
       "esnext",
       "dom",
       "dom.iterable",
-      "scripthost"
+      "scripthost",
+      "WebWorker"
     ]
   },
   "include": [
     "src/**/*.ts",
+    "src/**/*.worker.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
     "tests/**/*.ts",
-    "tests/**/*.tsx"
-  ],
+    "tests/**/*.tsx", "src/work/fileHash.worker.js"],
   "exclude": [
     "node_modules"
   ]
