@@ -10,11 +10,13 @@
   </div>
   <div>时间:{{useTimeRef}}秒</div>
     <div>速度:{{speed}}M/S</div>
+    <button @click="onPause">暂停</button>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref,computed } from "vue";
-import {upload} from './common/upload'
+// import {upload} from './common/upload'
+import Uploader,{SourceToken} from './uploader'
 export default defineComponent({
   setup() {
     const fileRef = ref<HTMLElement | null>(null)
@@ -29,6 +31,11 @@ export default defineComponent({
        const result = (loadedRef.value/(totalRef.value||1)) * 100
        return result.toFixed(2)
      })
+
+     const sourceToken = SourceToken.source()
+     const onPause = ()=>{
+       sourceToken.pause()
+     }
     const change = async  (e: any) => {
       const file = e.target.files[0];
       const onProgress = (progressEvent:any)=>{
@@ -40,9 +47,14 @@ export default defineComponent({
       const timer = setInterval(()=>{
         useTimeRef.value++
       },1000)
-      upload(file,{maxRunSize:6,onProgress,chunkSize:1024*1024*20,success:()=>{
+      
+      const uploader = Uploader.create()
+      uploader.upload(file,{
+        onProgress,chunkSize:1024*1024* 20,sourceToken
+      }).then(res =>{
         clearInterval(timer)
-      }});
+      })
+      
     };
 
     return {
@@ -52,7 +64,8 @@ export default defineComponent({
       totalRef,
       percentRef,
       useTimeRef,
-      speed
+      speed,
+      onPause
     };
   }
  
