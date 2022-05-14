@@ -16,7 +16,7 @@
 <script lang="ts">
 import { defineComponent, ref,computed } from "vue";
 // import {upload} from './common/upload'
-import Uploader,{SourceToken} from './uploader'
+import Uploader,{ACTION, SourceToken} from './uploader'
 export default defineComponent({
   setup() {
     const fileRef = ref<HTMLElement | null>(null)
@@ -32,9 +32,9 @@ export default defineComponent({
        return result.toFixed(2)
      })
 
-     const sourceToken = SourceToken.source()
+     const onPausetoken = SourceToken.source()
      const onPause = ()=>{
-       sourceToken.pause()
+       onPausetoken.useSource()
      }
     const change = async  (e: any) => {
       const file = e.target.files[0];
@@ -49,9 +49,13 @@ export default defineComponent({
       },1000)
       
       const uploader = Uploader.create()
+      let i = -1
+      uploader.on(ACTION.UPLOAD,(data)=>{
+        // console.log(++ i);
+      })
       uploader.upload(file,{
-        onProgress,chunkSize:1024*1024* 20,sourceToken
-      }).then(res =>{
+        onProgress,chunkSize:1024*1024* 30,onPausetoken,maxRunSize:6
+      }).then(() =>{
         clearInterval(timer)
       })
       
