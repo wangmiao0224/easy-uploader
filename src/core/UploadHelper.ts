@@ -76,11 +76,9 @@ class UploadHelper implements UploadHelperImp {
       };
 
     async upload(index = 0): Promise<void> {
-        this.uploadCallbckArr.map(cb => cb(file))
         if (this.pause) return  //暂停返回
         const fileFn = this.fileArr[++this.cursor]
         if (!fileFn) {   //全部完成
-            console.log(fileFn,this.runQuene);
             return
         }
         const file = await (fileFn && fileFn()) 

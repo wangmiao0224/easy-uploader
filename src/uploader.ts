@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import UploadHelper, { UploadConfigType } from "./core/UploadHelper";
 import FileHelper, { FileType, FileConfigType } from "./core/FileHelper";
-import SourceToken, { SourceType } from "./core/SourceToken";
+import SourceToken, { SourceType,SourceReturnType } from "./core/SourceToken";
 import type { CanEmpty, Resolve, UploadCallback, UploadCallbackArr } from "./utils/type";
 
 export {
@@ -103,16 +103,25 @@ class Uploader implements UploaderImp {
     );
 
     const getResolve = (): SourceType => {
-      let resolve: CanEmpty<Resolve<void>> = null;
-      const token = new Promise<void>((res) => {
+      let resolve!: Resolve<SourceReturnType>;
+      const token = new Promise<SourceReturnType>((res) => {
         resolve = res;
       }).then(() => {
+        const returnData: SourceReturnType = {
+          result: true,
+          message:''
+        }
+        console.log('sop');
+        
         if (uploadHelper.pause) {
-          uploadHelper.onUnPause();
+          returnData.result = uploadHelper.onUnPause()
+          returnData.message = '继续下载'
         } else {
-          uploadHelper.onPause();
+          returnData.result = uploadHelper.onPause()
+          returnData.message = '暂停下载'
         }
         onPausetoken?.setToken(getResolve());
+        return returnData
       });
       return {
         token,

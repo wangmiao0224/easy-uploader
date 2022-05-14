@@ -1,29 +1,41 @@
 import { CanEmpty,Resolve } from "@/utils/type";
 
 export type  SourceType={ 
-   token: Promise<void>
-   resolve: Resolve<void> | null
+   token: Promise<SourceReturnType>
+   resolve: Resolve<SourceReturnType>
+}
+export type SourceReturnType = {
+   result: boolean,
+   message?:string
 }
 
 class SourceToken { 
-   token: CanEmpty<Promise<void>>
-   resolve:CanEmpty<Resolve<void>>
-    pause!: () => void
-    
+   token: Promise<SourceReturnType>
+   resolve!:Resolve<SourceReturnType>
     source(): SourceToken { 
         return new SourceToken()
     }
+   constructor() { 
+      this.token = new Promise<SourceReturnType>(resolve => { 
+         this.resolve = resolve
+      }).then(() => { 
+         return {
+            result: false,
+            message:'令牌未被初始化，请正确调用'
+         }
+      })
+   }
    setToken(source: SourceType) { 
       const { token, resolve } = source
-      if (!this.token) { 
          this.token = token
          this.resolve = resolve
-      }
    }
-   useSource() { 
-      if (this.token) this.resolve && this.resolve()
-      this.token = null
-      this.resolve = null
+   useSource(): Promise<SourceReturnType>{ 
+      if (!this.resolve) { 
+         throw new Error('令牌已失效')
+      }
+      this.resolve && this.resolve({result:true})
+      return this.token
    }
  }
  const sourceToken = new SourceToken()
