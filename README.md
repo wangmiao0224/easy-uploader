@@ -1,5 +1,5 @@
 # easy-uploader
-- 上传功能Demo，支持分块上传和普通上传
+- 使用Axios进行文件分片上传，通过web-worker来进行文件的Hash计算，提高计算效率，减少浏览器的响应时间。并且支持请求并行，提高传输速度。
 
 ## Browser Support
 
