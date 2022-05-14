@@ -1,5 +1,9 @@
 # easy-uploader
-- 使用Axios进行文件分片上传，通过web-worker来进行文件的Hash计算，提高计算效率，减少浏览器的响应时间。并且支持请求并行，提高传输速度。
+- 文件分片上传
+- 请求并发运行
+- web-worker多进程计算文件hash
+- 文件断点续传
+- 失败重传(待续)
 
 ## Browser Support
 
