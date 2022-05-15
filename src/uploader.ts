@@ -63,7 +63,6 @@ function createInstance(defaultConfig: ConfigType = {}): Uploader {
 interface UploaderImp {
   onProgress: CanEmpty<Function>; //用户传入进度事件
   config: ConfigType; //实例化的时候Config
-  state: STATE; //当前实例的状态
   uploadHeplerInstance: UploadHelper;
   uploadCallbackArr: UploadCallbackArr; //分片upload钩子数组
   create: (config: ConfigType) => void; //创建新的实例
@@ -75,7 +74,7 @@ interface UploaderImp {
 class Uploader implements UploaderImp {
   public onProgress: CanEmpty<Function>;
   public config!: ConfigType;
-  public state: STATE = STATE.PENDING;
+  private state: STATE = STATE.PENDING;
   public uploadCallbackArr: UploadCallbackArr = [];
   public uploadHeplerInstance!: UploadHelper;
   constructor(config: ConfigType = {}) {
@@ -84,7 +83,11 @@ class Uploader implements UploaderImp {
   create(config: ConfigType = {}) {
     return createInstance(config);
   }
-  upload(file: File, config?: ConfigType) {
+  upload(file: File, config?: ConfigType):Promise<void> {
+    if (this.state === STATE.RUNNING) { 
+      throw new Error('当前正在上传中，请稍后上传')
+    }
+    //合并Config参数
     this.config = Object.assign(this.config, config);
     const {
       maxRunSize,
@@ -98,6 +101,7 @@ class Uploader implements UploaderImp {
       axiosInstance,
       isMD5
     } = this.config;
+    //uploadHelper参数
     const uploadConfig: UploadConfigType = {
       maxRunSize,
       onProgress,
@@ -105,6 +109,7 @@ class Uploader implements UploaderImp {
       uploadCallbackArr: this.uploadCallbackArr,
       axiosInstance
     };
+    //fileHelper参数
     const fileConfig: FileConfigType = {
       isMD5,
       chunkSize,

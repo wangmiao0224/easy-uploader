@@ -29,6 +29,8 @@ export default defineComponent({
     const loadedRef = ref<number>(0);     //已上传数量
     const totalRef = ref<number>(0);      //上传总数
     const useTimeRef = ref<number>(0);   //计时
+    let timeSpeed = 1 
+    let timer:any = null
     const isPause = ref<boolean>(false); //是否暂停
     const file = ref<File | null>(null); //选中的文件
     //计算上传进度
@@ -49,16 +51,23 @@ export default defineComponent({
     });
     //暂停token
     const onPauseToken = SourceToken.source();
+    //取消token
     const onCancelToken = SourceToken.source()
     const onPause = async () => {
       if (isPause.value === true) {
         const res = await onPauseToken.useSource();
         const { result } = res;
-        if (result) isPause.value = false;
+        if (result) {
+          timeSpeed = 1
+          isPause.value = false;
+        }
       } else {
         const res = await onPauseToken.useSource();
         const { result } = res;
-        if (result) isPause.value = true;
+        if (result) {
+          timeSpeed = 0
+          isPause.value = true
+        };
       }
     };
 
@@ -78,13 +87,15 @@ export default defineComponent({
     //取消下载事件
     const onCancel = () => {
       onCancelToken.useSource()
+      timeSpeed = 1
+      clearInterval(timer)
     };
 
     //开始上传
     const onUpload = () => {
       if (!file.value) return;
-      const timer = setInterval(() => {
-        useTimeRef.value++;
+       timer = setInterval(() => {
+        useTimeRef.value +=timeSpeed;
       }, 1000);
       //开始上传
       uploader
@@ -97,7 +108,7 @@ export default defineComponent({
           isMD5: true,
         })
         .then(() => {
-          clearInterval(timer);
+          clearInterval(timer)
         });
     };
     const change = async (e: any) => {
