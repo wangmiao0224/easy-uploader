@@ -182,7 +182,7 @@ class UploadHelper implements UploadHelperImp {
     this.reset();
   }
   reset(): void {
-    this.cursor = -1;
+      this.cursor = -1;
     this.fileArr = [];
     this.runQuene = new Map();
   }

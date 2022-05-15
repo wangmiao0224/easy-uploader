@@ -129,7 +129,9 @@ class Uploader implements UploaderImp {
           result: true,
           message: "",
         };
-
+        if (this.state === STATE.PENDING) { 
+          throw new Error('该任务未开始或者已经结束')
+        }
         if (this.uploadHeplerInstance.pause) {
           returnData.result = this.uploadHeplerInstance.onUnPause();
           if (returnData.result) this.state = STATE.RUNNING;
