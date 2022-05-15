@@ -56,6 +56,8 @@ class UploadHelper implements UploadHelperImp {
   file: CanEmpty<File>;
   pause = false;
   cursor = -1;
+  private success = 0;
+  private fail = 0;
   axiosInstance!: AxiosStatic;
   onProgress: CanEmpty<(progressEvent: any) => void>;
   constructor(fileArr: (() => Promise<FileType>)[], config: UploadConfigType) {
@@ -86,6 +88,7 @@ class UploadHelper implements UploadHelperImp {
 
   async upload(index = 0): Promise<void> {
     if (this.pause) return; //暂停返回
+
     const fileFn = this.fileArr[++this.cursor];
     if (!fileFn) {
       //全部完成
@@ -113,18 +116,21 @@ class UploadHelper implements UploadHelperImp {
       })
         .then((e) => {
           v.state = "finish";
-          this.uploadCallbckArr.map((cb) =>
-            cb({ state: "success", file, data: e })
+          this.success++
+          this.uploadCallbckArr.forEach((cb) => { 
+            cb({ state: "success",data: {success:this.success,fail:this.fail,data:e,file} })
+          }
           );
-          if (this.runQuene.size === 0 && this.fileArr.length === 0) {
+          if (this.success === this.fileArr.length) {
             this.successResolve();
           } else {
             this.upload(index);
           }
         })
         .catch((e) => {
+          this.fail++
           this.uploadCallbckArr.map((cb) =>
-            cb({ state: "fail", file, data: e })
+            cb({ state: "fail", file, data: {success:this.success,fail:this.fail,...e} })
           );
         }),
     };

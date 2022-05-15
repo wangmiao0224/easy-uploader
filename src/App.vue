@@ -82,7 +82,8 @@ export default defineComponent({
     const uploader = Uploader.create({ axiosInstance, isChunk: true });
     //监听上传
     uploader.on(ACTION.UPLOAD, (data) => {
-      console.log("已完成NO:" + data.file.no);
+      console.log(data);
+      
     });
     //取消下载事件
     const onCancel = () => {
@@ -108,6 +109,7 @@ export default defineComponent({
           isMD5: true,
         })
         .then(() => {
+          console.log('完成了');
           clearInterval(timer)
         });
     };
@@ -157,6 +159,7 @@ export default defineComponent({
 }
 .progress .progress-content {
   position: absolute;
+  width: 100%;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);

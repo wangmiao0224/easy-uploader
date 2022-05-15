@@ -1,4 +1,4 @@
-import { CanEmpty,Resolve } from "@/utils/type";
+import { Resolve } from "@/utils/type";
 
 export type  SourceType={ 
    token: Promise<SourceReturnType>
