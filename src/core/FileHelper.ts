@@ -6,15 +6,17 @@ import WorkerManager from "./WorkerManager";
 const DEFAULT_CHUNK_SIZE: number = 5 * 1024 * 1024;
 const DEFAULT_IS_CHUNK = true;
 const DEFAULT_USE_WORKER = true;
+const DEFAULT_IS_MD5 = true
 const DEFAULT_MAX_WORK_SIZE = 6;
 
 // 文件Config类型
-export type FileConfigType = {
-  chunkSize?: CanEmpty<number>; //分片文件大小
-  isChunk?: CanEmpty<boolean>; // 是否分
-  useWorker?: boolean; //是否使用web-worker
-  maxWorkSize?: number;
-};
+export type FileConfigType = Partial<{
+  chunkSize: CanEmpty<number>; //分片文件大小
+  isChunk: CanEmpty<boolean>; // 是否分
+  isMD5:CanEmpty<boolean> //是否计算MD5
+  useWorker: boolean; //是否使用web-worker
+  maxWorkSize: number;
+}>;
 
 //文件类型
 export type FileType = {
@@ -29,6 +31,7 @@ interface FileHelperImp {
   file: CanEmpty<File>; //用户传入文件
   chunkSize: number; //分片大小
   isChunk: boolean; //是否分片
+  isMD5:boolean
   fileChunks: FileType[]; //
   workerManager: WorkerManager; //web-worker管理
   useWorker: boolean; //是否使用web-worker
@@ -48,6 +51,7 @@ class FileHepler implements FileHelperImp {
   file: CanEmpty<File>;
   chunkSize = DEFAULT_CHUNK_SIZE;
   isChunk = DEFAULT_IS_CHUNK;
+  isMD5!:boolean;
   fileChunks: FileType[] = [];
   workerManager: WorkerManager;
   useWorker!: boolean;
@@ -105,8 +109,12 @@ class FileHepler implements FileHelperImp {
           no: index,
           file: chunk,
         };
-        return () =>
-          this.workerManager.postMessage([result, chunk]).then((e) => e.data);
+        return () => { 
+          if (this.isMD5) return this.workerManager.postMessage([result, chunk]).then((e) => e.data);
+          else { 
+            return Promise.resolve(result)
+          }
+        }
       });
     return promiseArr;
   }
@@ -121,6 +129,7 @@ class FileHepler implements FileHelperImp {
       isChunk = DEFAULT_IS_CHUNK,
       useWorker = DEFAULT_USE_WORKER,
       maxWorkSize = DEFAULT_MAX_WORK_SIZE,
+      isMD5 = DEFAULT_IS_MD5
     } = config || {};
     this.chunkSize = chunkSize || DEFAULT_CHUNK_SIZE;
     this.isChunk = isChunk || false;

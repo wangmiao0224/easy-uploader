@@ -23,14 +23,10 @@ export {
 };
 
 //uploader的Config
-type ConfigType = {
-  onPausetoken?: typeof SourceToken;
+type ConfigType = FileConfigType & {
   maxRunSize?: number; //最大请求并行数  默认6
   onProgress?: (progressEvent: any) => void; //上传进度函数
-  isChunk?: boolean; //是否分块上传， 默认true
-  chunkSize?: number; //分块大小 默认5 * 1024 * 1024,
-  useWorker?: boolean;
-  maxWorkSize?: number;
+  onPausetoken?: typeof SourceToken;
   axiosInstance?:AxiosStatic
 };
 
@@ -98,7 +94,8 @@ class Uploader implements UploaderImp {
       onPausetoken,
       useWorker,
       maxWorkSize,
-      axiosInstance
+      axiosInstance,
+      isMD5
     } = this.config;
     const uploadConfig: UploadConfigType = {
       maxRunSize,
@@ -108,6 +105,7 @@ class Uploader implements UploaderImp {
       axiosInstance
     };
     const fileConfig: FileConfigType = {
+      isMD5,
       chunkSize,
       isChunk,
       useWorker,

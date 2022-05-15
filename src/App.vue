@@ -1,5 +1,6 @@
 <template>
   <input name="avatar" type="file" ref="fileRef" @change="change" />
+  <button @click="onUpload">开始下载</button>
   <div class="progress">
     <div
       class="progress-bar"
@@ -22,6 +23,7 @@ import { defineComponent, ref, computed } from "vue";
 import { FileType } from "./core/FileHelper";
 // import {upload} from './common/upload'
 import Uploader, { ACTION, SourceToken } from "./uploader";
+import easyUploader from 'easy-uploader.js'
 export default defineComponent({
   setup() {
     const fileRef = ref<HTMLElement | null>(null);
@@ -29,6 +31,7 @@ export default defineComponent({
     const totalRef = ref<number>(0);
     const useTimeRef = ref<number>(0);
     const isPause = ref<boolean>(false)
+    const file = ref<File|null>(null)
     //速度显示
     const speed = computed(() => {
       const res = loadedRef.value / (useTimeRef.value || 1);
@@ -57,14 +60,16 @@ export default defineComponent({
     const axiosInstance = axios
     axiosInstance.interceptors.request.use((res:AxiosRequestConfig<FileType>)=>{
       res.url+='&key=1'
-      console.log(res);
-      
       return res
 })
-    const uploader = Uploader.create({axiosInstance,isChunk:false});
+    const uploader = Uploader.create({axiosInstance,isChunk:true});
+    //监听上传
+     uploader.on(ACTION.UPLOAD, (data) => {
+         console.log('已完成NO:'+data.file.no);
+      });
     const onCancel = ()=>uploader.cancel()
-    const change = async (e: any) => {
-      const file = e.target.files[0];
+    const onUpload = ()=>{
+      if(!file.value) return
       const onProgress = (progressEvent: any) => {
         const { loaded, total } = progressEvent;
         loadedRef.value = Math.floor((loaded / (1024 * 1024)) * 100) / 100;
@@ -73,23 +78,24 @@ export default defineComponent({
       const timer = setInterval(() => {
         useTimeRef.value++;
       }, 1000);
-      //监听上传
-      uploader.on(ACTION.UPLOAD, (data) => {
-        // console.log(data);
-      });
-
-      //开始上传
+       //开始上传
       uploader
-        .upload(file, {
+        .upload(file.value, {
           onProgress,
           chunkSize: 1024 * 1024 * 10,
           onPausetoken,
           maxRunSize: 6,
+          isMD5:false
         })
         .then(() => {
           clearInterval(timer);
         });
+    }
+    const change = async (e: any) => {
+      file.value = e.target.files[0];
     };
+
+    
 
 
 
@@ -104,7 +110,8 @@ export default defineComponent({
       speed,
       onPause,
       isPause,
-      onCancel
+      onCancel,
+      onUpload
     };
   },
 });
