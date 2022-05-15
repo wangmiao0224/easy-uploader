@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-types */
 import { transUrlParams } from "@/utils";
 import { CanEmpty, UploadCallbackArr } from "@/utils/type";
-import axios from "axios";
+import axios, { AxiosStatic } from "axios";
 import { FileType } from "./FileHelper";
 //默认参数
 const DEFAULT_MAX_RUN_SIZE = 6;
@@ -10,6 +10,7 @@ const DEFAULT_MAX_RUN_SIZE = 6;
 export type UploadConfigType = {
     file:File,
     maxRunSize?: number; //最大请求并行数  默认6
+    axiosInstance?:AxiosStatic
     onProgress?: (progressEvent: any) => void; //上传进度函数
     uploadCallbackArr?:UploadCallbackArr
 };
@@ -31,13 +32,16 @@ interface UploadHelperImp{
     tempLoaded:number                           //临时大小，暂停后更改进度值
     file: CanEmpty<File>                        //用户传入的文件
     pause:boolean                               //是否暂停
-    cursor:number                               //文件上传指针
+    cursor: number                               //文件上传指针
+    axiosInstance:AxiosStatic                                  //axios实例
     onProgress: CanEmpty<(progressEvent: any) => void> //进度条事件
     upload: () => void                          //每个分片的上传
     run: () => Promise<void>                     //开始上传
     onPause: () => void                         //暂停
     onUnPause: () => void                       //继续
-    setConfig:(config:UploadConfigType)=>void   //设置
+    setConfig: (config: UploadConfigType) => void   //设置
+    cancel: () => void                            //取消上传
+    reset:() => void                             //重置状态，但是config还是上次传入的
     
 }
 
@@ -55,6 +59,7 @@ class UploadHelper implements UploadHelperImp {
     file: CanEmpty<File>
     pause = false
     cursor = -1
+    axiosInstance!:AxiosStatic
     onProgress:CanEmpty<(progressEvent:any)=>void>
     constructor(fileArr:(()=>Promise<FileType>)[],config:UploadConfigType) {
         this.setConfig(config)
@@ -88,7 +93,7 @@ class UploadHelper implements UploadHelperImp {
         const onProgressEvent = this.onAllProgress(file)
         const v: runQueneType = {
             state: 'running',
-            request:axios({
+            request:this.axiosInstance({
                 method: "POST",
                 url: "/upload?" + transUrlParams({
                     name: file.name,
@@ -127,11 +132,12 @@ class UploadHelper implements UploadHelperImp {
         })
     }
     setConfig(config:UploadConfigType):void { 
-        const { file, maxRunSize = DEFAULT_MAX_RUN_SIZE, onProgress, uploadCallbackArr = [] } = config
+        const { file, maxRunSize = DEFAULT_MAX_RUN_SIZE, onProgress, uploadCallbackArr = [],axiosInstance = axios } = config
         this.uploadCallbckArr = uploadCallbackArr
         this.file = file
         this.maxRunSize = maxRunSize
         this.onProgress = onProgress
+        this.axiosInstance = axiosInstance
     }
 
     onPause(): boolean { 
@@ -151,6 +157,14 @@ class UploadHelper implements UploadHelperImp {
             }
         })
         return true
+    }
+    cancel():void { 
+        this.reset()
+    }
+    reset() :void{ 
+        this.cursor = -1
+        this.fileArr = []
+        this.runQuene = new Map()
     }
 }
 

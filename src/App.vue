@@ -13,10 +13,13 @@
   <div>时间:{{ useTimeRef }}秒</div>
   <div>速度:{{ speed }}M/S</div>
   <button @click="onPause">{{isPause?'点击继续':'点击暂停'}}</button>
+  <button @click="onCancel">取消</button>
 </template>
 
 <script lang="ts">
+import axios, { AxiosRequestConfig } from "axios";
 import { defineComponent, ref, computed } from "vue";
+import { FileType } from "./core/FileHelper";
 // import {upload} from './common/upload'
 import Uploader, { ACTION, SourceToken } from "./uploader";
 export default defineComponent({
@@ -51,6 +54,15 @@ export default defineComponent({
       }
       
     };
+    const axiosInstance = axios
+    axiosInstance.interceptors.request.use((res:AxiosRequestConfig<FileType>)=>{
+      res.url+='&key=1'
+      console.log(res);
+      
+      return res
+})
+    const uploader = Uploader.create({axiosInstance,isChunk:false});
+    const onCancel = ()=>uploader.cancel()
     const change = async (e: any) => {
       const file = e.target.files[0];
       const onProgress = (progressEvent: any) => {
@@ -61,8 +73,6 @@ export default defineComponent({
       const timer = setInterval(() => {
         useTimeRef.value++;
       }, 1000);
-
-      const uploader = Uploader.create();
       //监听上传
       uploader.on(ACTION.UPLOAD, (data) => {
         // console.log(data);
@@ -93,7 +103,8 @@ export default defineComponent({
       useTimeRef,
       speed,
       onPause,
-      isPause
+      isPause,
+      onCancel
     };
   },
 });
