@@ -94,7 +94,7 @@ export default defineComponent({
           onPauseToken,
           onCancelToken,
           maxRunSize: 6,
-          isMD5: false,
+          isMD5: true,
         })
         .then(() => {
           clearInterval(timer);

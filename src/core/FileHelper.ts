@@ -11,9 +11,9 @@ const DEFAULT_MAX_WORK_SIZE = 6;
 
 // 文件Config类型
 export type FileConfigType = Partial<{
-  chunkSize: CanEmpty<number>; //分片文件大小
-  isChunk: CanEmpty<boolean>; // 是否分
-  isMD5:CanEmpty<boolean> //是否计算MD5
+  chunkSize: number; //分片文件大小
+  isChunk: boolean; // 是否分
+  isMD5:boolean //是否计算MD5
   useWorker: boolean; //是否使用web-worker
   maxWorkSize: number;
 }>;
@@ -49,7 +49,7 @@ interface FileHelperImp {
  */
 class FileHepler implements FileHelperImp {
   file: CanEmpty<File>;
-  chunkSize = DEFAULT_CHUNK_SIZE;
+  chunkSize!:number;
   isChunk = DEFAULT_IS_CHUNK;
   isMD5!:boolean;
   fileChunks: FileType[] = [];
@@ -125,16 +125,17 @@ class FileHepler implements FileHelperImp {
    */
   setConfig(config?: FileConfigType): void {
     const {
-      chunkSize,
+      chunkSize = DEFAULT_CHUNK_SIZE,
       isChunk = DEFAULT_IS_CHUNK,
       useWorker = DEFAULT_USE_WORKER,
       maxWorkSize = DEFAULT_MAX_WORK_SIZE,
       isMD5 = DEFAULT_IS_MD5
     } = config || {};
-    this.chunkSize = chunkSize || DEFAULT_CHUNK_SIZE;
-    this.isChunk = isChunk || false;
+    this.chunkSize = chunkSize 
+    this.isChunk = isChunk 
     this.useWorker = useWorker;
     this.maxWorkSize = maxWorkSize;
+    this.isMD5 = isMD5 
   }
   //关闭所有的worker
   close(): void {
