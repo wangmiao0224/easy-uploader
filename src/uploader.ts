@@ -26,7 +26,8 @@ export {
 type ConfigType = FileConfigType & {
   maxRunSize?: number; //最大请求并行数  默认6
   onProgress?: (progressEvent: any) => void; //上传进度函数
-  onPausetoken?: typeof SourceToken;
+  onPauseToken?: typeof SourceToken;
+  onCancelToken?:typeof SourceToken
   axiosInstance?:AxiosStatic
 };
 
@@ -69,7 +70,6 @@ interface UploaderImp {
   upload: (file: File, config: ConfigType) => void; //上传文件
   on: (action: ACTION, callback: UploadCallback) => void; //新增钩子事件
   uploadAction: (callback: UploadCallback) => void; //增加上传分片钩子事件
-  cancel: () => void; //取消上传
 }
 
 class Uploader implements UploaderImp {
@@ -91,7 +91,8 @@ class Uploader implements UploaderImp {
       onProgress,
       chunkSize,
       isChunk,
-      onPausetoken,
+      onPauseToken,
+      onCancelToken,
       useWorker,
       maxWorkSize,
       axiosInstance,
@@ -118,6 +119,7 @@ class Uploader implements UploaderImp {
       uploadConfig
     );
 
+    //令牌：暂停功能实现
     const getResolve = (): SourceType => {
       let resolve!: Resolve<SourceReturnType>;
       const token = new Promise<SourceReturnType>((res) => {
@@ -127,7 +129,6 @@ class Uploader implements UploaderImp {
           result: true,
           message: "",
         };
-        console.log("sop");
 
         if (this.uploadHeplerInstance.pause) {
           returnData.result = this.uploadHeplerInstance.onUnPause();
@@ -138,7 +139,7 @@ class Uploader implements UploaderImp {
           if (returnData.result) this.state = STATE.PAUSE;
           returnData.message = "暂停下载";
         }
-        onPausetoken?.setToken(getResolve());
+        onPauseToken?.setToken(getResolve());
         return returnData;
       });
       return {
@@ -146,8 +147,23 @@ class Uploader implements UploaderImp {
         resolve,
       };
     };
-
-    onPausetoken?.setToken(getResolve());
+    onPauseToken?.setToken(getResolve());
+    
+    //令牌：取消功能实现
+    let cancelResolve!:Resolve<SourceReturnType>;
+    const cancelToken = new Promise<SourceReturnType>(res => { 
+      cancelResolve = res
+    }).then(() => { 
+      this.uploadHeplerInstance.cancel()
+      return {
+        result: true,
+        message:'取消成功'
+      }
+    })
+    onCancelToken?.setToken({
+      token: cancelToken,
+      resolve:cancelResolve
+    })
     this.state = STATE.RUNNING
     return this.uploadHeplerInstance?.run().then((res) => {
       this.state = STATE.PENDING
@@ -162,16 +178,6 @@ class Uploader implements UploaderImp {
   }
   uploadAction(callback: UploadCallback) {
     this.uploadCallbackArr.push(callback);
-  }
-
-  //取消当前上传
-  cancel(): void {
-    if (this.state === STATE.RUNNING) {
-      this.uploadHeplerInstance.cancel();
-      this.state = STATE.PENDING
-    } else {
-      throw new Error("当前Uploader没有上传文件");
-    }
   }
 }
 
